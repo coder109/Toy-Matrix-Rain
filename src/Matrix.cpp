@@ -5,10 +5,11 @@
  *****************************************/
 
 #include "Matrix.hpp"
+#include <algorithm>
 #include <csignal>
 #include <cstdlib>
 #include <cstring>
-#include <curses.h>
+#include <ctime>
 #include <ncurses.h>
 #include <unistd.h>
 
@@ -21,26 +22,30 @@ Matrix::Matrix(int show_length, int color) {
   this->my_window = initscr();
   refresh();
   getmaxyx(this->my_window, this->window_height, this->window_width);
+  std::srand(static_cast<unsigned int>(std::time(nullptr)));
   start_color();
   init_pair(1, COLOR_BLUE, COLOR_BLACK);
   init_pair(2, COLOR_WHITE, COLOR_BLACK);
   init_pair(3, COLOR_BLACK, COLOR_BLACK);
   attron(A_BOLD);
-
-  for (int i = 0; i < 8192; i++) {
-    this->row_recorder[i] = -rand() % 30;
+  const int column_count = std::max(0, this->window_width);
+  this->row_recorder.resize(static_cast<size_t>(column_count));
+  for (int i = 0; i < column_count; i++) {
+    this->row_recorder[static_cast<size_t>(i)] = -std::rand() % 30;
   }
 }
 
-Matrix::~Matrix() {}
+Matrix::~Matrix() { endwin(); }
 
 bool Matrix::ShowColumn(int column) {
+  const size_t column_index = static_cast<size_t>(column);
   int curr_row = 0;
-  if (this->row_recorder[column] >= this->window_height + this->show_length) {
+  if (this->row_recorder[column_index] >=
+      this->window_height + this->show_length) {
     curr_row = 0;
-    this->row_recorder[column] = 0;
+    this->row_recorder[column_index] = 0;
   } else {
-    curr_row = this->row_recorder[column]++;
+    curr_row = this->row_recorder[column_index]++;
   }
 
   // Output empty char in order to solve the problem:
@@ -57,7 +62,9 @@ bool Matrix::ShowColumn(int column) {
   // white
   for (int curr_processing_row = curr_row - this->show_length;
        curr_processing_row <= curr_row; ++curr_processing_row) {
-    char show_char = character_list[std::rand() % strlen(character_list)];
+    const size_t char_count = std::strlen(character_list);
+    char show_char =
+        character_list[static_cast<size_t>(std::rand()) % char_count];
     if (curr_processing_row < 0) {
       continue;
     } else if (curr_processing_row >= this->window_height) {
@@ -71,7 +78,7 @@ bool Matrix::ShowColumn(int column) {
       attron(A_DIM);
       mvaddch(curr_processing_row, column, show_char);
       attroff(A_DIM);
-      attron(COLOR_PAIR(1));
+      attroff(COLOR_PAIR(1));
     } else {
       attron(COLOR_PAIR(1));
       mvaddch(curr_processing_row, column, show_char);
@@ -113,9 +120,10 @@ bool Matrix::SetWindowSize() {
   init_pair(2, COLOR_WHITE, COLOR_BLACK);
   init_pair(3, COLOR_BLACK, COLOR_BLACK);
   attron(A_BOLD);
-
-  for (int i = 0; i < 8192; i++) {
-    this->row_recorder[i] = -rand() % 30;
+  const int column_count = std::max(0, this->window_width);
+  this->row_recorder.resize(static_cast<size_t>(column_count));
+  for (int i = 0; i < column_count; i++) {
+    this->row_recorder[static_cast<size_t>(i)] = -std::rand() % 30;
   }
 
   return true;

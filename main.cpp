@@ -4,21 +4,26 @@
 
 using namespace std;
 
-int win_change_flag = 0;
+volatile sig_atomic_t win_change_flag = 0;
+volatile sig_atomic_t exit_flag = 0;
 
 void handler(int signal_number) {
   if(signal_number == SIGWINCH) {
     win_change_flag = 1;
+  } else if (signal_number == SIGINT || signal_number == SIGTERM) {
+    exit_flag = 1;
   }
 }
 
-int main(int argc, char **argv) {
-  Matrix* my_matrix = new Matrix();
+int main() {
+  Matrix my_matrix;
   signal(SIGWINCH, handler);
-  while(1) {
-    my_matrix->Run();
+  signal(SIGINT, handler);
+  signal(SIGTERM, handler);
+  while(!exit_flag) {
+    my_matrix.Run();
     if(win_change_flag == 1) {
-      my_matrix->SetWindowSize();
+      my_matrix.SetWindowSize();
       win_change_flag = 0;
     }
   }

@@ -8,6 +8,7 @@
 
 #include <ncurses.h>
 #include <forward_list>
+#include <vector>
 
 class Matrix {
 public:
@@ -19,7 +20,7 @@ public:
   
 private:
   WINDOW* my_window;
-  int row_recorder[8192];
+  std::vector<int> row_recorder;
   int window_height;
   int window_width;
   int show_length;
